@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - adf_publish   # Se dispara cuando haces Publish en ADF
+  workflow_dispatch:   # manual only until ready 
 
 jobs:
   deploy:
