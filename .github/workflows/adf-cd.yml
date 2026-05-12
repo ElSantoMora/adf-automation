@@ -3,7 +3,7 @@ name: Deploy ADF DEV → STAGE
 on:
   push:
     branches:
-      - adf_publish   # Se dispara cuando haces Publish en ADF
+      - adf_publish
   workflow_dispatch:   # manual only until ready 
 
 jobs:
@@ -11,30 +11,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout del repo
+      # 1. Checkout
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Login a Azure con usuario/password (sandbox)
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: |
-            {
-              "clientId": "dummy",
-              "clientSecret": "dummy",
-              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
-              "tenantId": "${{ secrets.AZURE_TENANT_ID }}",
-              "username": "${{ secrets.AZURE_USERNAME }}",
-              "password": "${{ secrets.AZURE_PASSWORD }}"
-            }
+      # 2. Login correcto (SIN azure/login)
+      - name: Azure Login (User/Password)
+        run: |
+          az login \
+            --username "${{ secrets.AZURE_USERNAME }}" \
+            --password "${{ secrets.AZURE_PASSWORD }}" \
+            --tenant "${{ secrets.AZURE_TENANT_ID }}"
+          
+          az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
-      # 3. Deploy del ARM template al ADF Stage
+      # 3. Deploy ARM Template
       - name: Deploy ADF to STAGE
-        uses: azure/arm-deploy@v1
-        with:
-          resourceGroupName: 1-79a159cd-playground-sandbox
-          template: ./adf_publish/ARMTemplateForFactory.json
-          parameters: ./adf_publish/ARMTemplateParametersForFactory.json
-          overrideParameters: >
-            -factoryName adfpocstage918732
+        run: |
+          az deployment group create \
+            --resource-group 1-79a159cd-playground-sandbox \
+            --template-file ./adf_publish/ARMTemplateForFactory.json \
+            --parameters @./adf_publish/ARMTemplateParametersForFactory.json \
+            factoryName=adfpocstage918732
